@@ -3,15 +3,17 @@ import { Server } from '@overnightjs/core';
 import bodyParser from 'body-parser';
 import { ForecastController } from './controllers/forecast';
 import { Application } from 'express';
+import * as database from '@src/database';
 
 export class SetupServer extends Server {
   constructor(private port = 3000) {
     super(true);
   }
 
-  public init(): void {
+  async init(): Promise<void> {
     this.setupeExpress();
     this.setupeController();
+    await this.databaseSetup();
   }
 
   private setupeExpress(): void {
@@ -22,6 +24,16 @@ export class SetupServer extends Server {
     const forecast = new ForecastController();
     this.addControllers([forecast]);
   }
+
+  private async databaseSetup(): Promise<void> {
+    await database.connect();
+  }
+
+  public async close(): Promise<void> {
+    // turn of database only
+    await database.close();
+  }
+
   public getApp(): Application {
     return this.app;
   }

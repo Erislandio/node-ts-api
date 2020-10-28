@@ -1,4 +1,5 @@
 import { StormGlass } from '@src/clients/stormGlass';
+import { ForecastPoint } from '@src/clients/stormGlass.interfaces';
 import { InternalError } from '@src/utils/errors/internalError';
 import { Beach, BeachForecast, TimeForecast } from './forecast.interfaces';
 
@@ -18,16 +19,7 @@ export class Forecast {
       const pointsWishCorrectSources: Array<BeachForecast> = [];
       for (const beach of beaches) {
         const points = await this.stormGlass.fetchPoints(beach.lat, beach.lng);
-        const enrichedBeachData = points.map((point) => ({
-          ...{
-            lat: beach.lat,
-            lng: beach.lng,
-            name: beach.name,
-            position: beach.position,
-            rating: 1,
-          },
-          ...point,
-        }));
+        const enrichedBeachData = this.enrichedBeachData(points, beach);
 
         pointsWishCorrectSources.push(...enrichedBeachData);
       }
@@ -36,6 +28,22 @@ export class Forecast {
     } catch (error) {
       throw new ForecastProcessingIntenalError(error.message);
     }
+  }
+
+  private enrichedBeachData(
+    points: ForecastPoint[],
+    beach: Beach
+  ): BeachForecast[] {
+    return points.map((point) => ({
+      ...{
+        lat: beach.lat,
+        lng: beach.lng,
+        name: beach.name,
+        position: beach.position,
+        rating: 1,
+      },
+      ...point,
+    }));
   }
 
   private mapForecastByTime(forecast: BeachForecast[]): TimeForecast[] {
